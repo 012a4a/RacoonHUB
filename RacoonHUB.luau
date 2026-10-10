@@ -1,6 +1,3 @@
--- Pull A Sword hit aura. F6: on/off. F7: include/exclude players.
--- Starts OFF. Uses normal M1 attacks; the server decides range and damage.
--- Run through Real's live-reload to cleanly replace an earlier copy.
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -154,8 +151,6 @@ local function destroy()
         genv.CodexHitAura = nil
     end
 end
-
--- Declare the control table before callbacks can use it.
 aura = {
     Destroy = destroy,
     FindTarget = findTarget,
@@ -289,9 +284,6 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
         warn("[HitAura] Stopped: " .. tostring(err))
     end
 end))
-
-
--- Cancel local combat impulses without anchoring or changing server hit states.
 table.insert(connections, RunService.PreSimulation:Connect(function()
     if stopped or player:GetAttribute(PREFIX .. "AntiKnockback") ~= true then return end
     local character = player.Character
@@ -315,8 +307,6 @@ table.insert(connections, RunService.PreSimulation:Connect(function()
         end
     end
 end))
-
--- Drop identities are replicated before their pedestal reveal.
 local function refreshIndex()
     local raw = player:GetAttribute("SwordIndex")
     local ok, decoded = pcall(function() return HttpService:JSONDecode(type(raw) == "string" and raw or "[]") end)
@@ -459,8 +449,6 @@ aura.IsMissing = function(name) return ownIndex[name] ~= true end
 if type(STATE) == "table" and type(STATE.onCleanup) == "function" then
     STATE.onCleanup(destroy)
 end
-
--- One workflow owns movement at a time. Auto-sell never unlocks or sells all.
 local automation: any = {phase = "Idle", since = 0, lastPrompt = 0, lastPull = 0, candidate = nil, returnCF = nil}
 local function decodeAttribute(name)
     local raw = player:GetAttribute(name)
@@ -637,7 +625,6 @@ local function automationStep()
             return
         end
     end
-    -- Re-read the lock and selected inventory position immediately before selling.
     local records = decodeAttribute(candidate.source == "Inventory" and "Inventory" or "Swords")
     local item = records and records[candidate.index]
     local actualName = type(item) == "table" and item.Name or item
@@ -688,9 +675,6 @@ local function automationStep()
 end
 aura.SaleAllowed = saleAllowed
 aura.SaleCandidates = saleCandidates
-
--- Uses the existing talk prompt and only a server-offered reward answer.
--- No travel is performed by reward collection.
 local bennetPending: any = nil
 local bennetSessionUntil = 0
 local bennetLastPrompt = -math.huge
@@ -792,7 +776,12 @@ table.insert(connections, RunService.Heartbeat:Connect(function()
     end
 end))
 
-local menuIcon = getcustomasset("CodexPullASword/racoon-hub.jpg")
+local iconPath = "CodexPullASword/racoon-hub.jpg"
+if not isfile(iconPath) then
+    makefolder("CodexPullASword")
+    writefile(iconPath, game:HttpGet("https://raw.githubusercontent.com/012a4a/RacoonHUB/main/racoon-hub.jpg"))
+end
+local menuIcon = getcustomasset(iconPath)
 local WindUI: any = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 WindUI:AddTheme({
     Name = "SwordStudio", Accent = Color3.fromRGB(22, 28, 46),
@@ -806,7 +795,7 @@ WindUI:AddTheme({
     PanelBackgroundTransparency = 0.85,
 })
 window = WindUI:CreateWindow({
-    Title = "RacoonHUB", Author = "Pull A Sword • Combat and loot",
+    Title = "RacoonHUB", Author = "",
     NewElements = true, Topbar = {Height = 58, ButtonsType = "Mac"},
     Folder = "CodexPullASword", Size = UDim2.fromOffset(760, 560),
     Theme = "SwordStudio", SideBarWidth = 180, Resizable = true,
@@ -854,7 +843,6 @@ local function configureMenuIcon(targetWindow)
         end
         if child:IsA("Frame") then child.Size = UDim2.fromScale(1, 1) end
     end
-    -- WindUI normally hides its opener when opening the window.
     opener.Visible = function(_, _requestedVisibility)
         if container.Parent and not targetWindow.Destroyed then container.Visible = true end
     end
@@ -904,7 +892,6 @@ local function configureMenuIcon(targetWindow)
 end
 configureMenuIcon(window)
 aura.ConfigureMenuIcon = configureMenuIcon
--- The photo button stays visible while the menu is open or minimized.
 window.ToggleKey = nil
 local combat = window:Tab({Title = "Combat", Icon = "swords"})
 local drops = window:Tab({Title = "Sword Drops", Icon = "eye"})
@@ -1004,7 +991,7 @@ table.insert(connections, RunService.Heartbeat:Connect(function(dt)
 end))
 window:OnDestroy(destroy)
 player:SetAttribute(PREFIX .. "UIReady", true)
-print("[RacoonHUB] Ready. Floating raccoon icon opens the menu; F6 toggles auto-hit.")
+print("[RacoonHUB] Ready.")
 return {ready = true, enabled = false, radius = 10}
 
 
